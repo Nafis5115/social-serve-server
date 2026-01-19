@@ -44,35 +44,96 @@ app.use(express.json());
 // main().catch((err) => {
 //   console.error("The sample encountered an error:", err);
 // });
+const generateWithAI = async (event) => {
+  const prompt = `
+Generate volunteer responsibilities and safety guidelines for a community event.
 
+Event details:${event.description}
+Title: ${event.eventTitle}
+Type: ${event.eventType}
+Location: ${event.location}
+Description: ${event.description}
+
+Rules:
+- Generate 5 volunteer responsibilities
+- Generate 5 safety guidelines
+- Return ONLY valid JSON
+- No explanation, no markdown
+
+Format:
+{
+  "responsibilities": ["..."],
+  "safetyGuidelines": ["..."]
+}
+`;
+
+  const response = await aiClient.chat.completions.create({
+    model: model,
+    messages: [
+      { role: "system", content: "You generate structured JSON only." },
+      { role: "user", content: prompt },
+    ],
+  });
+
+  const text = response.choices[0].message.content;
+  const parsed = JSON.parse(text);
+
+  return parsed;
+};
 async function run() {
   try {
     await client.connect();
+    const db = client.db("social-serve");
+    const eventCollection = db.collection("eventCollection");
 
-    app.post("/ai", async (req, res) => {
-      try {
-        const { message } = req.body;
+    app.post("/create-event", async (req, res) => {
+      let newEvent = req.body;
 
-        const response = await aiClient.chat.completions.create({
-          model: model,
-          messages: [
-            { role: "system", content: "You are a helpful assistant" },
-            { role: "user", content: message },
-          ],
-        });
+      if (newEvent.aiAssistance === true) {
+        try {
+          const aiResult = await generateWithAI(newEvent);
 
-        res.json({
-          reply: response.choices[0].message.content,
-        });
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "AI request failed" });
+          console.log("AI RESULT:", aiResult);
+
+          newEvent.responsibilities = aiResult.responsibilities;
+          newEvent.safetyGuidelines = aiResult.safetyGuidelines;
+        } catch (err) {
+          console.error("ERROR:", err.message);
+
+          return res.status(500).json({
+            error: "AI generation failed",
+          });
+        }
       }
+
+      const result = await eventCollection.insertOne(newEvent);
+      res.json(result);
     });
 
     app.get("/", async (req, res) => {
       res.send("Hello server");
     });
+
+    //  app.post("/ai", async (req, res) => {
+    //   try {
+    //     const { message } = req.body;
+
+    //     const response = await aiClient.chat.completions.create({
+    //       model: model,
+    //       messages: [
+    //         { role: "system", content: "You are a helpful assistant" },
+    //         { role: "user", content: message },
+    //       ],
+    //     });
+
+    //     res.json({
+    //       reply: response.choices[0].message.content,
+    //     });
+    //   } catch (err) {
+    //     console.error(err);
+    //     res.status(500).json({ error: "AI request failed" });
+    //   }
+    // });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
