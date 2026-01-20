@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 dotenv.config({ path: ".env" });
@@ -107,6 +107,13 @@ async function run() {
 
       const result = await eventCollection.insertOne(newEvent);
       res.json(result);
+    });
+
+    app.get("/event-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await eventCollection.findOne(query);
+      res.send(result);
     });
 
     app.get("/upcoming-events", async (req, res) => {
