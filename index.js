@@ -117,24 +117,46 @@ async function run() {
     });
 
     app.get("/upcoming-events", async (req, res) => {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 6;
+      const skip = (page - 1) * limit;
       const today = new Date().toISOString().split("T")[0];
       const query = {
-        startDate: { $gte: today },
+        startDate: { $gt: today },
       };
-      const cursor = eventCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
+      const cursor = eventCollection
+        .find(query)
+        .sort({ startDate: 1 })
+        .skip(skip)
+        .limit(limit);
+      const events = await cursor.toArray();
+      const total = await eventCollection.countDocuments(query);
+      res.send({
+        events,
+        totalPages: Math.ceil(total / limit),
+      });
     });
 
     app.get("/active-events", async (req, res) => {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 6;
+      const skip = (page - 1) * limit;
       const today = new Date().toISOString().split("T")[0];
       const query = {
         startDate: { $lte: today },
         endDate: { $gte: today },
       };
-      const cursor = eventCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
+      const cursor = eventCollection
+        .find(query)
+        .sort({ startDate: 1 })
+        .skip(skip)
+        .limit(limit);
+      const events = await cursor.toArray();
+      const total = await eventCollection.countDocuments(query);
+      res.send({
+        events,
+        totalPages: Math.ceil(total / limit),
+      });
     });
 
     // app.get("/upcoming-events", async (req, res) => {
@@ -154,7 +176,7 @@ async function run() {
     app.get("/", async (req, res) => {
       const today = new Date();
 
-      res.send(formattedDate(today));
+      res.send(today);
     });
 
     //  app.post("/ai", async (req, res) => {
