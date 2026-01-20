@@ -74,12 +74,6 @@ Format:
   return parsed;
 };
 
-const formattedDate = (date) => {
-  const dateObj = new Date(date); // ✅ convert to Date
-  const options = { year: "numeric", month: "long", day: "numeric" };
-  return dateObj.toLocaleDateString("en-US", options);
-};
-
 //middleware
 app.use(cors());
 app.use(express.json());
@@ -93,7 +87,7 @@ async function run() {
     app.post("/create-event", async (req, res) => {
       const newEvent = req.body;
       const createdAt = new Date();
-      newEvent.createdAt = formattedDate(createdAt);
+      newEvent.createdAt = createdAt;
       if (newEvent.aiAssistance === true) {
         try {
           const aiResult = await generateWithAI(newEvent);
@@ -119,6 +113,17 @@ async function run() {
       const today = new Date().toISOString().split("T")[0];
       const query = {
         startDate: { $gte: today },
+      };
+      const cursor = eventCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/active-events", async (req, res) => {
+      const today = new Date().toISOString().split("T")[0];
+      const query = {
+        startDate: { $lte: today },
+        endDate: { $gte: today },
       };
       const cursor = eventCollection.find(query);
       const result = await cursor.toArray();
