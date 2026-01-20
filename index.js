@@ -24,10 +24,6 @@ const aiClient = new OpenAI({
   apiKey: token,
 });
 
-//middleware
-app.use(cors());
-app.use(express.json());
-
 //   const client = new OpenAI({ baseURL: endpoint, apiKey: token });
 
 //   const response = await client.chat.completions.create({
@@ -66,7 +62,6 @@ Format:
   "safetyGuidelines": ["..."]
 }
 `;
-
   const response = await aiClient.chat.completions.create({
     model: model,
     messages: [
@@ -74,12 +69,21 @@ Format:
       { role: "user", content: prompt },
     ],
   });
-
   const text = response.choices[0].message.content;
   const parsed = JSON.parse(text);
-
   return parsed;
 };
+
+const formattedDate = (date) => {
+  const dateObj = new Date(date); // ✅ convert to Date
+  const options = { year: "numeric", month: "long", day: "numeric" };
+  return dateObj.toLocaleDateString("en-US", options);
+};
+
+//middleware
+app.use(cors());
+app.use(express.json());
+
 async function run() {
   try {
     await client.connect();
@@ -87,8 +91,9 @@ async function run() {
     const eventCollection = db.collection("eventCollection");
 
     app.post("/create-event", async (req, res) => {
-      let newEvent = req.body;
-
+      const newEvent = req.body;
+      const createdAt = new Date();
+      newEvent.createdAt = formattedDate(createdAt);
       if (newEvent.aiAssistance === true) {
         try {
           const aiResult = await generateWithAI(newEvent);
@@ -110,8 +115,34 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/upcoming-events", async (req, res) => {
+      const today = new Date().toISOString().split("T")[0];
+      const query = {
+        startDate: { $gte: today },
+      };
+      const cursor = eventCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // app.get("/upcoming-events", async (req, res) => {
+    //   const cursor = eventCollection.find();
+    //   const allEvent = await cursor.toArray();
+    //   const result = allEvent.filter((event) => {
+    //     const currentDate = formattedDate(new Date());
+    //     const startDate = formattedDate(event.startDate);
+
+    //     if (currentDate <= startDate) {
+    //       return event;
+    //     }
+    //   });
+    //   res.send(result);
+    // });
+
     app.get("/", async (req, res) => {
-      res.send("Hello server");
+      const today = new Date();
+
+      res.send(formattedDate(today));
     });
 
     //  app.post("/ai", async (req, res) => {
