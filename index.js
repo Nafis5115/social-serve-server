@@ -277,13 +277,39 @@ async function run() {
       const newJoin = req.body;
       const createdAt = new Date();
       newJoin.createdAt = createdAt;
+      newJoin.eventId = new ObjectId(newJoin.eventId);
       const result = await joinsCollection.insertOne(newJoin);
       return res.send(result);
     });
 
+    app.get("/my-joins", async (req, res) => {
+      const email = req.query.email;
+      // const query = {};
+      // if (email) {
+      //   query.userEmail = email;
+      // }
+      // const cursor = joinsCollection.find(query);
+      // const result = await cursor.toArray();
+
+      const cursor = joinsCollection.aggregate([
+        { $match: { userEmail: email } },
+        {
+          $lookup: {
+            from: "eventCollection",
+            localField: "eventId",
+            foreignField: "_id",
+            as: "event",
+          },
+        },
+        { $unwind: "$event" },
+      ]);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     app.get("/event-joins/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { eventId: id };
+      const query = { eventId: new ObjectId(id) };
       const cursor = joinsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
