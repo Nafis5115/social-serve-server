@@ -80,11 +80,33 @@ Format:
 app.use(cors());
 app.use(express.json());
 
+//verify jwt token
+const verifyJWTToken = (req, res, next) => {
+  const token = req.headers;
+  console.log(token);
+  next();
+};
+
 async function run() {
   try {
     await client.connect();
     const db = client.db("social-serve");
     const eventCollection = db.collection("eventCollection");
+    const userCollection = db.collection("userCollection");
+
+    app.post("/create-user", async (req, res) => {
+      const newUser = req.body;
+      const createdAt = new Date();
+      newUser.createdAt = createdAt;
+      const query = { email: req.body.email };
+      const existingUser = userCollection.find(query);
+      if (existingUser) {
+        res.send({ message: "User already exits" });
+      } else {
+        const result = await userCollection.insertOne(newUser);
+        res.send(result);
+      }
+    });
 
     app.post("/create-event", async (req, res) => {
       const newEvent = req.body;
@@ -111,11 +133,31 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/my-events", async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      if (email) {
+        query.ownerEmail = email;
+      }
+      const cursor = eventCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     app.get("/event-details/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await eventCollection.findOne(query);
-      res.send(result);
+      const eventQuery = { _id: new ObjectId(id) };
+      const event = await eventCollection.findOne(eventQuery);
+      const ownerEmail = event.ownerEmail;
+      const userQuery = {};
+      if (ownerEmail) {
+        userQuery.email = ownerEmail;
+      }
+      const userInfo = await userCollection.findOne(userQuery);
+      res.send({
+        event,
+        userInfo,
+      });
     });
 
     app.get("/upcoming-events", async (req, res) => {
