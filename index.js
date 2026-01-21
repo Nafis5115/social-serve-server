@@ -133,13 +133,42 @@ async function run() {
       res.json(result);
     });
 
+    app.patch("/edit-event/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedEvent = req.body;
+      const updatedAt = new Date();
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: updatedEvent };
+      updatedEvent.updatedAt = updatedAt;
+
+      if (updatedEvent.aiAssistance === true) {
+        try {
+          const aiResult = await generateWithAI(updatedEvent);
+
+          console.log("AI RESULT:", aiResult);
+
+          updatedEvent.responsibilities = aiResult.responsibilities;
+          updatedEvent.safetyGuidelines = aiResult.safetyGuidelines;
+        } catch (err) {
+          console.error("ERROR:", err.message);
+
+          return res.status(500).json({
+            error: "AI generation failed",
+          });
+        }
+      }
+
+      const result = await eventCollection.updateOne(query, update);
+      res.json(result);
+    });
+
     app.get("/my-events", async (req, res) => {
       const email = req.query.email;
       const query = {};
       if (email) {
         query.ownerEmail = email;
       }
-      const cursor = eventCollection.find(query);
+      const cursor = eventCollection.find(query).sort({ createdAt: -1 });
       const result = await cursor.toArray();
       res.send(result);
     });
