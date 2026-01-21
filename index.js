@@ -43,9 +43,10 @@ const aiClient = new OpenAI({
 //   console.error("The sample encountered an error:", err);
 // });
 const generateWithAI = async (event) => {
+  const variation = Date.now();
   const prompt = `
 Generate volunteer responsibilities and safety guidelines for a community event.
-
+Variation: ${variation}
 Event details:${event.description}
 Title: ${event.eventTitle}
 Type: ${event.eventType}
@@ -58,6 +59,14 @@ Rules:
 - Return ONLY valid JSON
 - No explanation, no markdown
 
+IMPORTANT:
+- Do NOT start all points with the same verb
+- Vary sentence structure
+- Mix imperative, descriptive, and passive styles
+- Avoid repeating opening words
+- At least 2 sentences must NOT start with a verb
+- When Regenerate Use different sentence openings
+
 Format:
 {
   "responsibilities": ["..."],
@@ -66,6 +75,7 @@ Format:
 `;
   const response = await aiClient.chat.completions.create({
     model: model,
+    temperature: 0.9,
     messages: [
       { role: "system", content: "You generate structured JSON only." },
       { role: "user", content: prompt },
@@ -133,22 +143,29 @@ async function run() {
       res.json(result);
     });
 
-    app.patch("/edit-event/:id", async (req, res) => {
+    app.patch("/update-event/:id", async (req, res) => {
       const id = req.params.id;
-      const updatedEvent = req.body;
+      const { regenerateAI, ...updatedEvent } = req.body;
       const updatedAt = new Date();
       const query = { _id: new ObjectId(id) };
       const update = { $set: updatedEvent };
       updatedEvent.updatedAt = updatedAt;
 
-      if (updatedEvent.aiAssistance === true) {
+      if (regenerateAI === true) {
         try {
-          const aiResult = await generateWithAI(updatedEvent);
+          const aiInput = {
+            eventTitle: updatedEvent.eventTitle,
+            eventType: updatedEvent.eventType,
+            location: updatedEvent.location,
+            description: updatedEvent.description,
+          };
+          const aiResult = await generateWithAI(aiInput);
 
           console.log("AI RESULT:", aiResult);
 
           updatedEvent.responsibilities = aiResult.responsibilities;
           updatedEvent.safetyGuidelines = aiResult.safetyGuidelines;
+          updatedEvent.aiAssistance = true;
         } catch (err) {
           console.error("ERROR:", err.message);
 
