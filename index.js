@@ -99,7 +99,7 @@ async function run() {
       const createdAt = new Date();
       newUser.createdAt = createdAt;
       const query = { email: req.body.email };
-      const existingUser = userCollection.find(query);
+      const existingUser = await userCollection.findOne(query);
       if (existingUser) {
         res.send({ message: "User already exits" });
       } else {
