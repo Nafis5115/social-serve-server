@@ -44,35 +44,44 @@ const aiClient = new OpenAI({
 // });
 const generateWithAI = async (event) => {
   const variation = Date.now();
+
   const prompt = `
-Generate volunteer responsibilities and safety guidelines for a community event.
-Variation: ${variation}
-Event details:${event.description}
+Please generate original written content for a community event.
+
+Random seed: ${variation}
+
+Event information:
 Title: ${event.eventTitle}
 Type: ${event.eventType}
 Location: ${event.location}
 Description: ${event.description}
 
-Rules:
-- Generate 5 volunteer responsibilities
-- Generate 5 safety guidelines
-- Return ONLY valid JSON
-- No explanation, no markdown
+Goal:
+Create two lists:
+• 5 volunteer responsibilities
+• 5 safety guidelines
 
-IMPORTANT:
-- Do NOT start all points with the same verb
-- Vary sentence structure
-- Mix imperative, descriptive, and passive styles
-- Avoid repeating opening words
-- At least 2 sentences must NOT start with a verb
-- When Regenerate Use different sentence openings
+Writing guidance:
+- Each sentence should feel distinct in structure and tone
+- Sentence openings should vary naturally
+- A mix of descriptive, situational, observational, and neutral phrasing is preferred
+- Some sentences may be action-oriented, others explanatory or contextual
+- Try to avoid repeating similar wording patterns
 
-Format:
+Variation preference:
+If this content is regenerated, imagine it is written by a different person using a different writing style and vocabulary.
+
+Output requirements:
+- Respond only with valid JSON
+- Do not include explanations, headings, or markdown
+
+JSON format:
 {
-  "responsibilities": ["..."],
-  "safetyGuidelines": ["..."]
+  "responsibilities": ["...", "...", "...", "...", "..."],
+  "safetyGuidelines": ["...", "...", "...", "...", "..."]
 }
 `;
+
   const response = await aiClient.chat.completions.create({
     model: model,
     temperature: 0.9,
