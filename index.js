@@ -103,6 +103,7 @@ async function run() {
     const db = client.db("social-serve");
     const eventCollection = db.collection("eventCollection");
     const userCollection = db.collection("userCollection");
+    const joinsCollection = db.collection("joinsCollection");
 
     app.post("/create-user", async (req, res) => {
       const newUser = req.body;
@@ -270,6 +271,22 @@ async function run() {
         events,
         totalPages: Math.ceil(total / limit),
       });
+    });
+
+    app.post("/create-join", async (req, res) => {
+      const newJoin = req.body;
+      const createdAt = new Date();
+      newJoin.createdAt = createdAt;
+      const result = await joinsCollection.insertOne(newJoin);
+      return res.send(result);
+    });
+
+    app.get("/event-joins/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { eventId: id };
+      const cursor = joinsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
     app.post("/getToken", (req, res) => {
