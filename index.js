@@ -179,6 +179,13 @@ async function run() {
       res.json(result);
     });
 
+    app.delete("/delete-event/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await eventCollection.deleteOne(query);
+      return res.send(result);
+    });
+
     app.get("/my-events", async (req, res) => {
       const email = req.query.email;
       const query = {};
