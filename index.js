@@ -3,6 +3,8 @@ import cors from "cors";
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import jwt from "jsonwebtoken";
+
 dotenv.config({ path: ".env" });
 
 const app = express();
@@ -173,6 +175,17 @@ async function run() {
         events,
         totalPages: Math.ceil(total / limit),
       });
+    });
+
+    app.post("/getToken", (req, res) => {
+      const token = jwt.sign(
+        { email: req.body.email },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
+        },
+      );
+      res.send({ token: token });
     });
 
     // app.get("/upcoming-events", async (req, res) => {
