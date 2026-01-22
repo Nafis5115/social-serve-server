@@ -324,6 +324,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/delete-join", async (req, res) => {
+      const { eventId, userEmail } = req.body;
+      const query = { eventId: new ObjectId(eventId), userEmail: userEmail };
+      const result = await joinsCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.post("/getToken", (req, res) => {
       const token = jwt.sign(
         { email: req.body.email },
