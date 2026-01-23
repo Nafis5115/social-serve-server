@@ -101,9 +101,21 @@ app.use(express.json());
 
 //verify jwt token
 const verifyJWTToken = (req, res, next) => {
-  const token = req.headers;
-  console.log(token);
-  next();
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ message: "Unauthorized access!" });
+  }
+  const token = authorization.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized access!" });
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, decode) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized access!" });
+    }
+    req.headers.token_email = decode.email;
+    next();
+  });
 };
 
 async function run() {
@@ -196,15 +208,19 @@ async function run() {
       return res.send(result);
     });
 
-    app.get("/my-events", async (req, res) => {
+    app.get("/my-events", verifyJWTToken, async (req, res) => {
       const email = req.query.email;
+      console.log(email);
       const query = {};
       if (email) {
+        if (email !== req.headers.token_email || "") {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
         query.ownerEmail = email;
+        const cursor = eventCollection.find(query).sort({ createdAt: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
       }
-      const cursor = eventCollection.find(query).sort({ createdAt: -1 });
-      const result = await cursor.toArray();
-      res.send(result);
     });
 
     app.get("/event-details/:id", async (req, res) => {
