@@ -9,8 +9,8 @@ dotenv.config({ path: ".env" });
 
 const app = express();
 const port = process.env.PORT || 3000;
-// const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster0.f4oujya.mongodb.net/?appName=Cluster0`;
-const uri = "mongodb://localhost:27017/";
+const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster0.f4oujya.mongodb.net/?appName=Cluster0`;
+// const uri = "mongodb://localhost:27017/";
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -403,7 +403,7 @@ async function run() {
     //   }
     // });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
