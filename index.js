@@ -210,6 +210,43 @@ async function run() {
       return res.send(result);
     });
 
+    app.get("/dashboard", verifyJWTToken, async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      if (!email) {
+        return res.status(401).send({ message: "Unauthorized access!" });
+      }
+      if (email !== req.headers.token_email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const createdEventsCount = await eventCollection.countDocuments({
+          ownerEmail: email,
+        });
+
+        const joinedEventsCount = await joinsCollection.countDocuments({
+          userEmail: email,
+        });
+        const activeEventsCount = await eventCollection.countDocuments({
+          ownerEmail: email,
+          startDate: { $lte: today },
+          endDate: { $gte: today },
+        });
+        res.send({
+          data: {
+            eventsJoined: joinedEventsCount,
+            eventsCreated: createdEventsCount,
+            activeEvents: activeEventsCount,
+          },
+        });
+      } catch (error) {
+        res.status(500).send({ message: "Dashboard data fetch failed" });
+      }
+    });
+
     app.get("/my-events", verifyJWTToken, async (req, res) => {
       const email = req.query.email;
 
