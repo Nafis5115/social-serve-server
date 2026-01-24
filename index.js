@@ -212,7 +212,7 @@ async function run() {
 
     app.get("/dashboard", verifyJWTToken, async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+
       if (!email) {
         return res.status(401).send({ message: "Unauthorized access!" });
       }
