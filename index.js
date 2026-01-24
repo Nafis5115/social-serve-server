@@ -242,7 +242,8 @@ async function run() {
       const search = req.query.search;
       const category = req.query.category;
       const skip = (page - 1) * limit;
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const query = {
         startDate: { $gt: today },
       };
@@ -271,7 +272,8 @@ async function run() {
       const search = req.query.search;
       const category = req.query.category;
       const skip = (page - 1) * limit;
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const query = {
         startDate: { $lte: today },
         endDate: { $gte: today },
