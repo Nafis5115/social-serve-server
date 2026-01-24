@@ -376,7 +376,7 @@ async function run() {
     // });
 
     app.get("/", async (req, res) => {
-      res.send("Server is running");
+      res.send("Server ");
     });
 
     //  app.post("/ai", async (req, res) => {
