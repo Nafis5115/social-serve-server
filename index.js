@@ -212,15 +212,16 @@ async function run() {
       const email = req.query.email;
       console.log(email);
       const query = {};
-      if (email) {
-        if (email !== req.headers.token_email || "") {
-          return res.status(403).send({ message: "Forbidden access" });
-        }
-        query.ownerEmail = email;
-        const cursor = eventCollection.find(query).sort({ createdAt: -1 });
-        const result = await cursor.toArray();
-        res.send(result);
+      if (!email) {
+        return res.status(401).send({ message: "Unauthorized access!" });
       }
+      if (email !== req.headers.token_email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      query.ownerEmail = email;
+      const cursor = eventCollection.find(query).sort({ createdAt: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
     app.get("/event-details/:id", async (req, res) => {
@@ -307,7 +308,7 @@ async function run() {
       return res.send(result);
     });
 
-    app.get("/my-joins", async (req, res) => {
+    app.get("/my-joins", verifyJWTToken, async (req, res) => {
       const email = req.query.email;
       // const query = {};
       // if (email) {
@@ -316,6 +317,9 @@ async function run() {
       // const cursor = joinsCollection.find(query);
       // const result = await cursor.toArray();
 
+      if (email !== req.headers.token_email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
       const cursor = joinsCollection.aggregate([
         { $match: { userEmail: email } },
         {
