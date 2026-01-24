@@ -316,7 +316,6 @@ async function run() {
       // }
       // const cursor = joinsCollection.find(query);
       // const result = await cursor.toArray();
-
       if (email !== req.headers.token_email) {
         return res.status(403).send({ message: "Forbidden access" });
       }
