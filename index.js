@@ -377,9 +377,7 @@ async function run() {
     // });
 
     app.get("/", async (req, res) => {
-      const today = new Date();
-
-      res.send(today);
+      res.send("Server is running");
     });
 
     //  app.post("/ai", async (req, res) => {
