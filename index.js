@@ -142,6 +142,12 @@ async function run() {
 
     app.post("/create-event", async (req, res) => {
       const newEvent = req.body;
+      newEvent.startDate = new Date(newEvent.startDate);
+      newEvent.startDate.setUTCHours(0, 0, 0, 0);
+
+      newEvent.endDate = new Date(newEvent.endDate);
+      newEvent.endDate.setUTCHours(23, 59, 59, 999);
+
       const createdAt = new Date();
       newEvent.createdAt = createdAt;
       if (newEvent.aiAssistance === true) {
