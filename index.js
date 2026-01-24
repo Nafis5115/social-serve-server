@@ -148,8 +148,6 @@ async function run() {
         try {
           const aiResult = await generateWithAI(newEvent);
 
-          console.log("AI RESULT:", aiResult);
-
           newEvent.responsibilities = aiResult.responsibilities;
           newEvent.safetyGuidelines = aiResult.safetyGuidelines;
         } catch (err) {
@@ -183,8 +181,6 @@ async function run() {
           };
           const aiResult = await generateWithAI(aiInput);
 
-          console.log("AI RESULT:", aiResult);
-
           updatedEvent.responsibilities = aiResult.responsibilities;
           updatedEvent.safetyGuidelines = aiResult.safetyGuidelines;
           updatedEvent.aiAssistance = true;
@@ -210,7 +206,7 @@ async function run() {
 
     app.get("/my-events", verifyJWTToken, async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+
       const query = {};
       if (!email) {
         return res.status(401).send({ message: "Unauthorized access!" });
