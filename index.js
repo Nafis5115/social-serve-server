@@ -120,7 +120,6 @@ const verifyJWTToken = (req, res, next) => {
 
 async function run() {
   try {
-    await client.connect();
     const db = client.db("social-serve");
     const eventCollection = db.collection("eventCollection");
     const userCollection = db.collection("userCollection");
